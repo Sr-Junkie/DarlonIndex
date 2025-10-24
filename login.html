@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tela de Login — Meu Site</title>
+  <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --accent:#2563eb;
+      --muted:#6b7280;
+      --success:#16a34a;
+      --danger:#ef4444;
+      --shadow: 0 8px 30px rgba(35,47,63,0.08);
+      --radius:12px;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      color:#0f172a;
+    }
+
+    /* Card */
+    .card{
+      width:100%;
+      max-width:420px;
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:28px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      align-items:center;
+    }
+
+    /* Logo */
+    .logo-link {
+      text-decoration: none;
+    }
+
+    .logo{
+      width:92px;height:92px;
+      border-radius:18px;
+      overflow:hidden;
+      display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(16,24,40,0.04);
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      box-shadow: 0 4px 18px rgba(16,24,40,0.04) inset;
+    }
+    .brand{font-weight:600;margin-top:6px;color:var(--muted);font-size:14px}
+
+    h1{margin:0;font-size:20px}
+    p.lead{margin:0;color:var(--muted);font-size:13px;text-align:center}
+
+    /* Social buttons */
+    .socials{display:flex;flex-direction:column;gap:10px;width:100%}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,0.06);
+      background:transparent;font-weight:600;cursor:pointer;font-size:14px;width:100%;
+      transition:transform .08s ease, box-shadow .08s ease;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.google{background:#fff}
+    .btn.roblox{background:linear-gradient(90deg,#f7f7f7,#fff);}
+    .btn.email{background:var(--accent);color:#fff;border:none}
+
+    .or{
+      width:100%;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px
+    }
+    .or:before,.or:after{content:'';flex:1;height:1px;background:rgba(15,23,42,0.04);border-radius:2px}
+
+    form{width:100%;display:flex;flex-direction:column;gap:10px}
+    label{font-size:13px;color:var(--muted)}
+    input[type="email"],input[type="password"]{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,0.06);
+      background:#fff;font-size:14px;outline:none
+    }
+    input:focus{border-color:rgba(37,99,235,0.9);box-shadow:0 6px 18px rgba(37,99,235,0.06)}
+
+    .actions{display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px}
+    .link{font-size:13px;color:var(--accent);text-decoration:none}
+    .muted{font-size:13px;color:var(--muted)}
+
+    .small{font-size:12px;color:var(--muted)}
+    .error{color:var(--danger);font-size:13px}
+    .success{color:var(--success);font-size:13px}
+
+    footer{font-size:12px;color:var(--muted);text-align:center}
+
+    /* Responsive */
+    @media (max-width:460px){
+      .card{padding:18px}
+      .logo{width:76px;height:76px}
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="loginTitle">
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <a href="home.html" class="logo-link">
+        <div class="logo" aria-hidden="true">
+          <!-- Provided base64 image -->
+          <img src="data:image/jpeg;base64,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" alt="Logo" style="width:100%;height:100%;object-fit:cover;"/>
+        </div>
+      </a>
+      <div class="brand">MeuSite</div>
+    </div>
+
+    <h1 id="loginTitle">Entrar na sua conta</h1>
+    <p class="lead">Use uma das opções abaixo para entrar ou crie uma conta com e‑mail.</p>
+
+    <div class="socials" role="region" aria-label="Entrar com redes">
+      <button class="btn google" id="btnGoogle" aria-label="Entrar com Google">
+        <!-- simple SVG Google-ish icon -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.35 11.1H12v2.8h5.35c-.23 1.24-1 2.3-2.12 3l3.43 2.64c2-1.86 3.14-4.68 3.14-7.74 0-.64-.06-1.26-.15-1.86z" fill="#4285F4"/><path d="M12 22c2.7 0 4.98-.9 6.64-2.44l-3.43-2.64c-.95.64-2.18 1.04-3.21 1.04-2.47 0-4.56-1.66-5.31-3.9H2.9v2.45C4.56 19.86 8.0 22 12 22z" fill="#34A853"/><path d="M6.69 13.06A6.98 6.98 0 016 12c0-.34.03-.68.08-1.01V8.54H2.9A10.99 10.99 0 002 12c0 1.73.37 3.37 1.03 4.86l3.66-3.8z" fill="#FBBC05"/><path d="M12 6.5c1.47 0 2.8.5 3.85 1.48L19.03 4.8C17 3.08 14.6 2 12 2 8 2 4.56 4.14 2.9 7.52l3.66 2.98C7.44 8.16 9.53 6.5 12 6.5z" fill="#EA4335"/></svg>
+        Entrar com Google
+      </button>
+
+      <button class="btn roblox" id="btnRoblox" aria-label="Entrar com Roblox">
+        <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="#111827"/></svg>
+        Entrar com Roblox
+      </button>
+
+      <button class="btn email" id="showEmail">Entrar com e‑mail</button>
+    </div>
+
+    <div style="width:100%;display:flex;align-items:center;justify-content:center">
+      <div class="or">ou</div>
+    </div>
+
+    <!-- Email/password form (starts hidden) -->
+    <div id="emailPanel" style="width:100%;display:none">
+      <form id="formLogin" autocomplete="on">
+        <div>
+          <label for="email">E‑mail</label>
+          <input id="email" name="email" type="email" placeholder="seu@exemplo.com" required />
+        </div>
+        <div>
+          <label for="password">Senha</label>
+          <input id="password" name="password" type="password" placeholder="••••••••" minlength="6" required />
+        </div>
+        <div class="actions">
+          <a href="#" class="link" id="forgot">Esqueceu a senha?</a>
+          <button type="submit" class="btn email">Entrar</button>
+        </div>
+      </form>
+
+      <div style="width:100%;display:flex;justify-content:center;margin-top:6px">
+        <button id="showSignUp" class="btn" style="background:transparent">Criar conta com e‑mail</button>
+      </div>
+      <div id="msg" class="small" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- Sign up panel (hidden) -->
+    <div id="signupPanel" style="width:100%;display:none">
+      <form id="formSignUp" autocomplete="on">
+        <div>
+          <label for="su-email">E‑mail</label>
+          <input id="su-email" name="su-email" type="email" placeholder="seu@exemplo.com" required />
+        </div>
+        <div>
+          <label for="su-password">Senha (mínimo 6 caracteres)</label>
+          <input id="su-password" name="su-password" type="password" placeholder="••••••" minlength="6" required />
+        </div>
+        <div>
+          <label for="su-name">Nome (opcional)</label>
+          <input id="su-name" name="su-name" type="text" placeholder="Seu nome" />
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <button type="button" id="backToLogin" class="btn" style="background:transparent">Voltar</button>
+          <button type="submit" class="btn email">Criar conta</button>
+        </div>
+      </form>
+      <div id="signupMsg" class="small" role="status" aria-live="polite"></div>
+    </div>
+
+    <footer>
+      Ao continuar, você concorda com os termos de uso e a política de privacidade.
+    </footer>
+  </main>
+
+  <script>
+    // Simple UI logic. IMPORTANT: This page is a front-end demo only.
+    // To make social logins work in production you must implement OAuth flows on the server
+    // or use the provider's official client libraries.
+
+    const btnGoogle = document.getElementById('btnGoogle');
+    const btnRoblox = document.getElementById('btnRoblox');
+    const showEmail = document.getElementById('showEmail');
+    const emailPanel = document.getElementById('emailPanel');
+    const signupPanel = document.getElementById('signupPanel');
+    const showSignUp = document.getElementById('showSignUp');
+    const backToLogin = document.getElementById('backToLogin');
+    const formLogin = document.getElementById('formLogin');
+    const formSignUp = document.getElementById('formSignUp');
+    const msg = document.getElementById('msg');
+    const signupMsg = document.getElementById('signupMsg');
+
+    // Toggle helpers
+    function showPanel(panel){
+      emailPanel.style.display = panel === 'email' ? 'block' : 'none';
+      signupPanel.style.display = panel === 'signup' ? 'block' : 'none';
+    }
+
+    showEmail.addEventListener('click', ()=>{ showPanel('email'); msg.textContent=''; signupMsg.textContent=''; });
+    showSignUp.addEventListener('click', ()=>{ showPanel('signup'); msg.textContent=''; signupMsg.textContent=''; });
+    backToLogin.addEventListener('click', ()=>{ showPanel('email'); });
+
+    // Mocked email login
+    formLogin.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const email = formLogin.email.value.trim();
+      const password = formLogin.password.value;
+      msg.textContent = '';
+
+      // Simple client-side validation
+      if(!email || password.length < 6){
+        msg.textContent = 'Verifique o e‑mail e a senha (mínimo 6 caracteres).';
+        msg.className = 'error';
+        return;
+      }
+
+      // Demo behaviour: accept any address that includes "@" and password length >=6
+      // Replace this with a call to your auth API.
+      msg.textContent = 'Entrando...';
+      msg.className = 'small';
+      setTimeout(()=>{
+        msg.textContent = '';
+        alert('Login simulado concluído para: ' + email + '\n(Na produção, envie esses dados ao seu servidor para autenticação)');
+      },700);
+    });
+
+    // Mocked sign up
+    formSignUp.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const email = formSignUp['su-email'].value.trim();
+      const pw = formSignUp['su-password'].value;
+      const name = formSignUp['su-name'].value.trim();
+      signupMsg.textContent = '';
+
+      if(!email || pw.length < 6){
+        signupMsg.textContent = 'Preencha um e‑mail válido e uma senha com ao menos 6 caracteres.';
+        signupMsg.className = 'error';
+        return;
+      }
+
+      signupMsg.textContent = 'Criando conta...';
+      signupMsg.className = 'small';
+      setTimeout(()=>{
+        signupMsg.className = 'success';
+        signupMsg.textContent = 'Conta criada com sucesso (simulação). Você pode agora fazer login.';
+        // clear form
+        formSignUp.reset();
+        showPanel('email');
+      },900);
+    });
+
+    // Social login buttons — these are placeholders. To enable real providers:
+    // Google: use Google's OAuth 2.0 endpoints or Google Identity Services. Example (high level):
+    // 1) Create OAuth client in Google Cloud Console; 2) On click, open a redirect to
+    //    https://accounts.google.com/o/oauth2/v2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=profile email
+    // 3) Complete server-side exchange to get tokens.
+    // Roblox: Roblox provides OAuth for Open Cloud (see Roblox developer docs). The flow is similar.
+
+    btnGoogle.addEventListener('click', ()=>{
+      // For demo: show an explanatory dialog
+      alert('Este botão simula o fluxo "Entrar com Google".\nPara funcionar de verdade, implemente o fluxo OAuth conforme descrito nos comentários do código.');
+    });
+
+    btnRoblox.addEventListener('click', ()=>{
+      alert('Este botão simula o fluxo "Entrar com Roblox".\nNa produção, configure o OAuth da Roblox e redirecione o usuário para o provedor.');
+    });
+
+    // Accessibility: allow Enter to show email panel if focused on the showEmail button
+    document.getElementById('showEmail').addEventListener('keyup', (e)=>{ if(e.key === 'Enter') showPanel('email'); });
+
+    // On load: keep compact (hide email). You can change to showPanel('email') if you prefer.
+    showPanel(null);
+  </script>
+</body>
+</html>
