@@ -162,10 +162,35 @@ if(!isMobile){
 // ================== FUNÇÕES ==================
 function shoot(){
   if(reloading || ammo<=0 || gameOver) return;
-  const angle = isMobile ? 0 : Math.atan2(mouse.y-player.y, mouse.x-player.x);
-  bullets.push({x:player.x,y:player.y,dx:Math.cos(angle)*10,dy:Math.sin(angle)*10,size:6});
-  ammo--; soundShoot.currentTime=0; soundShoot.play();
-  if(ammo<=0){ reloading=true; setTimeout(()=>{ ammo=maxAmmo; reloading=false; }, reloadTime);}
+
+  let angle;
+  if(isMobile){
+    const len = Math.hypot(joystick.dx, joystick.dy);
+    if(len > 0){
+      angle = Math.atan2(joystick.dy, joystick.dx);
+    } else {
+      angle = 0; // se o joystick parado, atira para frente
+    }
+  } else {
+    angle = Math.atan2(mouse.y-player.y, mouse.x-player.x);
+  }
+
+  bullets.push({
+    x: player.x,
+    y: player.y,
+    dx: Math.cos(angle) * 10,
+    dy: Math.sin(angle) * 10,
+    size: 6
+  });
+
+  ammo--;
+  soundShoot.currentTime = 0;
+  soundShoot.play();
+
+  if(ammo <= 0){
+    reloading = true;
+    setTimeout(() => { ammo = maxAmmo; reloading = false; }, reloadTime);
+  }
 }
 
 function spawnZombie(){
