@@ -211,6 +211,8 @@ function movePlayer(){
     if(len>0){
       dx = (joystick.dx/50) * player.speed;
       dy = (joystick.dy/50) * player.speed;
+      // gira o player na direção do joystick
+      player.angle = Math.atan2(joystick.dy, joystick.dx);
     }
   } else {
     if(keys['w']) dy-=player.speed;
