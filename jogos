@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zombie Arena - Etapa 6</title>
+<style>
+  html, body { margin:0; padding:0; overflow:hidden; background:#111; }
+  canvas { display:block; width:100vw; height:100vh; }
+  #restartBtn {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:24px;
+    padding:15px 30px;
+    background:#ff3333;
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    display:none;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<button id="restartBtn">Reiniciar</button>
+
+<script>
+// ================== INICIALIZAÇÃO ==================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const restartBtn = document.getElementById('restartBtn');
+let screenFlash = 0; // efeito de dano
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+function resizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+
+// ================== ÁUDIO ==================
+const soundShoot = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3');
+const soundZombieDead = new Audio('https://freesound.org/data/previews/235/235968_3989728-lq.mp3');
+const soundPlayerHit = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3');
+
+// ================== VARIÁVEIS ==================
+let player, bullets, zombies, lives, kills, spawnTimer, gameOver, explosions;
+const maxAmmo = 6;
+let ammo = maxAmmo, reloading=false, reloadTime=2000;
+let mouse={x:0,y:0}; const keys={};
+
+function resetGame(){
+    player={x:canvas.width/2,y:canvas.height/2,size:40,speed:4,angle:0};
+    bullets=[]; zombies=[]; lives=3; kills=0; spawnTimer=0; gameOver=false;
+    ammo=maxAmmo; reloading=false; explosions=[]; screenFlash=0;
+    restartBtn.style.display='none';
+}
+resetGame();
+
+// ================== CONTROLES ==================
+window.addEventListener('mousemove', e=>mouse={x:e.clientX, y:e.clientY});
+window.addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
+window.addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
+window.addEventListener('mousedown', shoot);
+restartBtn.addEventListener('click', ()=>{ resetGame(); update(); });
+
+// ================== FUNÇÕES ==================
+function shoot(){
+    if(reloading || ammo<=0 || gameOver) return;
+    bullets.push({x:player.x,y:player.y,dx:Math.cos(player.angle)*10,dy:Math.sin(player.angle)*10,size:6});
+    ammo--; soundShoot.currentTime=0; soundShoot.play();
+    if(ammo<=0){ reloading=true; setTimeout(()=>{ ammo=maxAmmo; reloading=false; }, reloadTime);}
+}
+
+function spawnZombie(){
+    const side=Math.floor(Math.random()*4), offset=50; let x,y;
+    if(side===0){ x=Math.random()*canvas.width; y=-offset; }
+    else if(side===1){ x=canvas.width+offset; y=Math.random()*canvas.height; }
+    else if(side===2){ x=Math.random()*canvas.width; y=canvas.height+offset; }
+    else{ x=-offset; y=Math.random()*canvas.height; }
+    zombies.push({x,y,size:35,speed:1.2});
+}
+
+function movePlayer(){
+    if(gameOver) return;
+    let dx=0,dy=0;
+    if(keys['w']) dy-=player.speed;
+    if(keys['s']) dy+=player.speed;
+    if(keys['a']) dx-=player.speed;
+    if(keys['d']) dx+=player.speed;
+    const len=Math.hypot(dx,dy);
+    if(len>0){ dx/=len; dy/=len; }
+    player.x+=dx*player.speed; player.y+=dy*player.speed;
+    player.x=Math.max(player.size/2,Math.min(canvas.width-player.size/2,player.x));
+    player.y=Math.max(player.size/2,Math.min(canvas.height-player.size/2,player.y));
+}
+
+function update(){
+    if(gameOver) return;
+    const mx=mouse.x-player.x, my=mouse.y-player.y; player.angle=Math.atan2(my,mx);
+
+    movePlayer();
+
+    bullets=bullets.filter(b=>{ b.x+=b.dx; b.y+=b.dy; return b.x>=0 && b.x<=canvas.width && b.y>=0 && b.y<=canvas.height; });
+
+    spawnTimer++; if(spawnTimer>60){ spawnZombie(); spawnTimer=0; }
+
+    for(let i=zombies.length-1;i>=0;i--){
+        const z=zombies[i];
+        const angle=Math.atan2(player.y-z.y,player.x-z.x);
+        z.x+=Math.cos(angle)*z.speed; z.y+=Math.sin(angle)*z.speed;
+
+        // colisão bala x zumbi
+        for(let j=bullets.length-1;j>=0;j--){
+            const b=bullets[j];
+            if(Math.hypot(b.x-z.x,b.y-z.y)<z.size/2+b.size/2){
+                zombies.splice(i,1); bullets.splice(j,1); kills++;
+                explosions.push({x:z.x,y:z.y,radius:0,maxRadius:30}); soundZombieDead.currentTime=0; soundZombieDead.play();
+                break;
+            }
+        }
+
+        // colisão zumbi x jogador
+        if(Math.hypot(z.x-player.x,z.y-player.y)<z.size/2+player.size/2){
+            zombies.splice(i,1); lives--; screenFlash=5; soundPlayerHit.currentTime=0; soundPlayerHit.play();
+            if(lives<=0) endGame();
+        }
+    }
+
+    // atualizar explosões
+    explosions=explosions.filter(ex=>{
+        ex.radius+=2; return ex.radius<=ex.maxRadius;
+    });
+
+    if(screenFlash>0) screenFlash--;
+
+    draw();
+    requestAnimationFrame(update);
+}
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // jogador
+    ctx.save(); ctx.translate(player.x,player.y); ctx.rotate(player.angle);
+    ctx.fillStyle='#00aaff';
+    ctx.fillRect(-player.size/2,-player.size/2,player.size,player.size);
+    ctx.fillStyle='#fff'; ctx.fillRect(player.size/2,-5,20,10);
+    ctx.restore();
+
+    // balas
+    ctx.fillStyle='#ffcc00';
+    bullets.forEach(b=>{ ctx.beginPath(); ctx.arc(b.x,b.y,b.size,0,Math.PI*2); ctx.fill(); });
+
+    // zumbis
+    ctx.fillStyle='#ff4444';
+    zombies.forEach(z=>{ ctx.beginPath(); ctx.arc(z.x,z.y,z.size/2,0,Math.PI*2); ctx.fill(); });
+
+    // explosões
+    ctx.strokeStyle='yellow'; ctx.lineWidth=2;
+    explosions.forEach(ex=>{ ctx.beginPath(); ctx.arc(ex.x,ex.y,ex.radius,0,Math.PI*2); ctx.stroke(); });
+
+    // HUD
+    ctx.fillStyle='#fff'; ctx.font='20px Arial';
+    ctx.fillText(`❤️ Vidas: ${lives}`,20,40);
+    ctx.fillText(`🔫 Balas: ${ammo}/${maxAmmo}`,20,70);
+    ctx.fillText(`💀 Zumbis mortos: ${kills}`,20,100);
+    if(reloading){ ctx.fillStyle='orange'; ctx.fillText('Recarregando...',20,130); }
+
+    // efeito de dano
+    if(screenFlash>0){
+        ctx.fillStyle='rgba(255,0,0,0.3)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+
+    // GAME OVER
+    if(gameOver){
+        ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle='#ff3333'; ctx.font='60px Arial Black'; ctx.textAlign='center';
+        ctx.fillText('GAME OVER',canvas.width/2,canvas.height/2-50);
+    }
+}
+
+function endGame(){ gameOver=true; restartBtn.style.display='block'; draw(); }
+
+update();
+</script>
+</body>
+</html>
