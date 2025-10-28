@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Jogo com Zumbi Animado</title>
+<style>
+  body { margin: 0; overflow: hidden; background: #222; }
+  canvas { background: #333; display: block; margin: auto; }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// =============================
+// Configuração do jogador
+// =============================
+const player = {
+  x: 400,
+  y: 300,
+  size: 40,
+  speed: 4,
+  img: new Image()
+};
+player.img.src = 'pato.png'; // sua imagem de jogador
+
+// =============================
+// Configuração do inimigo (zumbi/esqueleto)
+// =============================
+const skeletonFrames = [];
+const totalFrames = 17;
+let currentFrame = 0;
+let frameTimer = 0;
+const frameInterval = 100; // milissegundos entre frames (~10 fps)
+
+// Carregar as 17 imagens
+for (let i = 0; i < totalFrames; i++) {
+  const img = new Image();
+  img.src = `skeleton-move_${i}.png`;
+  skeletonFrames.push(img);
+}
+
+const skeleton = {
+  x: 100,
+  y: 100,
+  speed: 2
+};
+
+// =============================
+// Controles do jogador
+// =============================
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+// =============================
+// Atualização do jogo
+// =============================
+function update(deltaTime) {
+  // Movimento do jogador
+  if (keys['ArrowUp']) player.y -= player.speed;
+  if (keys['ArrowDown']) player.y += player.speed;
+  if (keys['ArrowLeft']) player.x -= player.speed;
+  if (keys['ArrowRight']) player.x += player.speed;
+
+  // Movimento do esqueleto em direção ao jogador
+  const dx = player.x - skeleton.x;
+  const dy = player.y - skeleton.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist > 0) {
+    skeleton.x += (dx / dist) * skeleton.speed;
+    skeleton.y += (dy / dist) * skeleton.speed;
+  }
+
+  // Atualizar animação
+  frameTimer += deltaTime;
+  if (frameTimer > frameInterval) {
+    frameTimer = 0;
+    currentFrame = (currentFrame + 1) % totalFrames;
+  }
+}
+
+// =============================
+// Desenho
+// =============================
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Desenhar jogador
+  ctx.drawImage(player.img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+  
+  // Desenhar inimigo animado
+  const frameImg = skeletonFrames[currentFrame];
+  if (frameImg.complete) {
+    ctx.drawImage(frameImg, skeleton.x - 32, skeleton.y - 32, 64, 64);
+  }
+}
+
+// =============================
+// Loop principal
+// =============================
+let lastTime = 0;
+function gameLoop(timestamp) {
+  const deltaTime = timestamp - lastTime;
+  lastTime = timestamp;
+
+  update(deltaTime);
+  draw();
+  
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop(0);
+</script>
+</body>
+</html>
