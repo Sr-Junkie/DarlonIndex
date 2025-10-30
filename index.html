@@ -1,122 +1,347 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Maker Hub — Espaço Colaborativo</title>
-  <style>
-    /* Estilo base */
-    body {
-      font-family: "Inter", sans-serif;
-      background-color: #0a0a0a;
-      color: #fff;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 10px;
-      color: #00ffff;
-      text-shadow: 0 0 10px #00ffff;
-    }
-
-    p {
-      font-size: 1.2rem;
-      color: #ccc;
-      max-width: 600px;
-      margin-bottom: 40px;
-    }
-
-    .btn {
-      color: #00ffff;
-      background-color: transparent;
-      border: 2px solid #00ffff;
-      padding: 12px 30px;
-      margin: 10px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: 0.3s;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .btn:hover {
-      background-color: #00ffff;
-      color: #000;
-    }
-
-    /* Formulário de login */
-    #loginForm {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-    }
-
-    #loginForm input {
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
-      border: none;
-      width: 200px;
-      font-size: 1rem;
-    }
-
-    #loginForm button {
-      margin-top: 10px;
-      width: 220px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zombie Arena - Ranking</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #111;
+  font-family: 'Press Start 2P', monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  cursor: none; /* Oculta cursor padrão */
+}
+canvas {
+  display: block;
+  background: #111;
+  width: 1083px;
+  height: 718px;
+  border: 2px solid #333;
+  box-shadow: 0 0 20px #000;
+}
+#restartBtn {
+  position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+  font-size:24px; padding:15px 30px; background:#ff3333; color:white;
+  border:none; border-radius:10px; cursor:pointer; display:none;
+}
+#loveText {
+  position:absolute; top:calc(50% + 60px); left:50%; transform:translateX(-50%);
+  color:#ff77ff; font-size:16px; text-align:center; text-shadow:0 0 8px #ff00ff; display:none;
+  font-family:'Press Start 2P';
+}
+#recordInput {
+  position:absolute; display:none; top:50%; left:50%; transform:translate(-50%,-50%);
+  padding:15px 20px; font-size:20px; border-radius:12px; border:none; outline:none;
+  font-family:'Press Start 2P'; background:#222; color:#fff; text-align:center; box-shadow:0 0 15px #ff00ff;
+}
+#newRecordMsg {
+  position:absolute; display:none; top:40%; left:50%; transform:translateX(-50%);
+  color:#ff0; font-size:24px; text-align:center; text-shadow:0 0 12px #ff00ff;
+  font-family:'Press Start 2P';
+}
+#gameOverMsg {
+  position:absolute; display:none; top:30%; left:50%; transform:translateX(-50%);
+  color:red; font-size:32px; text-align:center; text-shadow:0 0 12px #ff0000;
+  font-family:'Press Start 2P';
+}
+</style>
 </head>
 <body>
+<canvas id="gameCanvas"></canvas>
+<button id="restartBtn">Reiniciar</button>
+<div id="loveText">MARLEM EU TE AMO ❤️</div>
+<input id="recordInput" placeholder="DIGITE SEU NOME" maxlength="10"/>
+<div id="newRecordMsg">🎉 NOVO RECORD! 🎉</div>
+<div id="gameOverMsg">GAME OVER</div>
 
-  <h1>Maker Hub</h1>
-  <p>Bem-vindo ao espaço colaborativo de atividades MAKER! Aqui você pode compartilhar seus projetos e acompanhar as criações dos colegas em programação, robótica e eletrônica.</p>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 1083;
+canvas.height = 718;
+const restartBtn = document.getElementById('restartBtn');
+const loveText = document.getElementById('loveText');
+const recordInput = document.getElementById('recordInput');
+const newRecordMsg = document.getElementById('newRecordMsg');
+const gameOverMsg = document.getElementById('gameOverMsg');
 
-  <div>
-    <a href="#" class="btn" onclick="mostrarLogin()">Fazer Login</a>
-    <a href="login" class="btn">Criar Conta</a>
-  </div>
+function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-  <!-- Formulário de Login Simulado -->
-  <div id="loginForm">
-    <input type="text" id="username" placeholder="Usuário">
-    <input type="password" id="password" placeholder="Senha">
-    <button class="btn" onclick="login()">Entrar</button>
-  </div>
+// === ESCALAS E OFFSETS ===
+const scale = (35 / 288) * 4.5;
+const playerScale = (35 / 288) * 5.5;
+let bulletOffsetX = 85;
+let bulletOffsetY = 35	;
 
-  <script>
-    // Mostrar formulário de login
-    function mostrarLogin() {
-      document.getElementById('loginForm').style.display = 'flex';
+// === SPRITES ===
+let zombieFrames = [], playerFrames = [], shootFrames = [], meleeFrames = [];
+
+// === IMAGEM DE FUNDO ===
+const background = new Image();
+background.src = 'supermercado.png';
+
+// === GAME STATE ===
+let player, bullets, zombies, particles, lives, kills, spawnTimer, gameOver;
+let ammo=6, maxAmmo=6, reloading=false, reloadTime=2000;
+let specialUnlocked=false, specialShotsLeft=50;
+let damageFlash=0, damageCooldown=0;
+const keys={};
+let highScores = JSON.parse(localStorage.getItem('highScores')) || [{name:'---',score:0},{name:'---',score:0},{name:'---',score:0}];
+let awaitingName=false;
+
+// CONTROLES
+window.addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
+window.addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
+window.addEventListener('mousemove', e=>mouse={x:e.clientX, y:e.clientY});
+let mouse={x:0,y:0};
+window.addEventListener('mousedown', shoot);
+
+// CARREGAR IMAGENS
+function loadImages(paths, callback){
+    let loaded=0, imgs=[];
+    for(let i=0;i<paths.length;i++){
+        const img=new Image();
+        img.src=paths[i];
+        img.onload = () => { loaded++; if(loaded===paths.length) callback(imgs); };
+        imgs.push(img);
+    }
+}
+const zombiePaths = []; for(let i=0;i<=16;i++) zombiePaths.push(`skeleton-move_${i}.png`);
+const playerPaths = []; for(let i=0;i<=19;i++) playerPaths.push(`survivor-move_shotgun_${i}.png`);
+const shootPaths = []; for(let i=0;i<=2;i++) shootPaths.push(`survivor-shoot_shotgun_${i}.png`);
+const meleePaths = []; for(let i=0;i<=14;i++) meleePaths.push(`survivor-meleeattack_shotgun_${i}.png`);
+
+loadImages(zombiePaths, imgs=>{ zombieFrames.push(...imgs);
+    loadImages(playerPaths, imgs2=>{ playerFrames.push(...imgs2);
+        loadImages(shootPaths, imgs3=>{ shootFrames.push(...imgs3);
+            loadImages(meleePaths, imgs4=>{ meleeFrames.push(...imgs4); resetGame(); gameLoop(); });
+        });
+    });
+});
+
+// FUNÇÕES PRINCIPAIS
+function resetGame(){
+    player={x:canvas.width/2,y:canvas.height/2,size:40,speed:4,angle:0,frame:0,frameTimer:0,
+            shooting:false,shootFrame:0,shootTimer:0,meleeing:false,meleeFrame:0,meleeTimer:0};
+    bullets=[]; zombies=[]; particles=[]; lives=3; kills=0; spawnTimer=0; gameOver=false;
+    ammo=maxAmmo; reloading=false; specialUnlocked=false; specialShotsLeft=50;
+    damageFlash=0; damageCooldown=0;
+    restartBtn.style.display='none'; loveText.style.display='none';
+    recordInput.style.display='none'; newRecordMsg.style.display='none'; awaitingName=false;
+}
+
+function shoot(){
+    if(reloading || ammo<=0 || gameOver || player.meleeing) return;
+    const angle=Math.atan2(mouse.y-player.y, mouse.x-player.x);
+    const bulletX = player.x + bulletOffsetX*Math.cos(angle) - bulletOffsetY*Math.sin(angle);
+    const bulletY = player.y + bulletOffsetX*Math.sin(angle) + bulletOffsetY*Math.cos(angle);
+    bullets.push({x:bulletX,y:bulletY,dx:Math.cos(angle)*50,dy:Math.sin(angle)*50,size:8,special:specialUnlocked});
+    ammo--; if(specialUnlocked) specialShotsLeft--;
+    player.shooting=true; player.shootFrame=0; player.shootTimer=0;
+    for(let i=0;i<4;i++){
+        const angleOffset = (Math.random()-0.5)*0.5;
+        const speed = Math.random()*2+1;
+        particles.push({x:bulletX,y:bulletY,dx:Math.cos(angle+angleOffset)*speed,dy:Math.sin(angle+angleOffset)*speed,life:10,size:2});
+    }
+    if(ammo<=0){ reloading=true; setTimeout(()=>{ ammo=maxAmmo; reloading=false; }, reloadTime); }
+    if(specialUnlocked && specialShotsLeft<=0){ specialUnlocked=false; specialShotsLeft=50; }
+}
+
+function movePlayer(){ 
+    if(player.meleeing) return;
+    let dx=0,dy=0;
+    if(keys['w']) dy-=player.speed;
+    if(keys['s']) dy+=player.speed;
+    if(keys['a']) dx-=player.speed;
+    if(keys['d']) dx+=player.speed;
+    const len=Math.hypot(dx,dy);
+    if(len>0){ dx/=len; dy/=len; dx*=player.speed; dy*=player.speed; }
+    player.x+=dx; player.y+=dy;
+    player.x=Math.max(player.size/2, Math.min(canvas.width-player.size/2, player.x));
+    player.y=Math.max(player.size/2, Math.min(canvas.height-player.size/2, player.y));
+    player.angle=Math.atan2(mouse.y-player.y, mouse.x-player.x);
+}
+
+// SPAWN ZOMBIES
+
+function spawnZombie(){
+    const side = Math.floor(Math.random()*3); // 0 = esquerda, 1 = direita, 2 = baixo
+    const offset = 50;
+    let x, y;
+
+    if(side===0){ // esquerda
+        x = -offset;
+        y = Math.random() * canvas.height;
+    } else if(side===1){ // direita
+        x = canvas.width + offset;
+        y = Math.random() * canvas.height;
+    } else { // baixo
+        x = Math.random() * canvas.width;
+        y = canvas.height + offset;
     }
 
-    // Usuários pré-definidos
-    const users = {
-      aluno: { password: 'aluno', role: 'user' },
-      admin: { password: 'admin', role: 'admin' }
-    };
+// CONFIGURACOES DOS ZOMBIES
+    zombies.push({x, y, size:95, speed:1.2, frame:0, frameTimer:0, angle:0, pushX:0, pushY:0, pushTimer:0});
+}
 
-    function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
 
-      if(users[username] && users[username].password === password) {
-        alert(`Login bem-sucedido! Tipo de usuário: ${users[username].role}`);
-        // Redirecionar para a página de feed (exemplo: feed.html)
-        window.location.href = 'home.html';
-      } else {
-        alert('Usuário ou senha incorretos!');
-      }
+function updateBullets(){ for(let i=bullets.length-1;i>=0;i--){ const b=bullets[i]; b.x+=b.dx; b.y+=b.dy; if(b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height) bullets.splice(i,1); } }
+function updateParticles(){ for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.dx; p.y+=p.dy; p.life--; if(p.life<=0) particles.splice(i,1); } }
+function spawnParticles(x,y,count=8){ for(let i=0;i<count;i++){ const angle=Math.random()*Math.PI*2; const speed=Math.random()*4+1; particles.push({x,y,dx:Math.cos(angle)*speed,dy:Math.sin(angle)*speed,life:20,size:4}); } }
+
+function updateZombies(){
+    zombies.forEach(z=>{
+        if(z.pushTimer>0){ z.x+=z.pushX; z.y+=z.pushY; z.pushTimer--; } 
+        else { const dx=player.x-z.x, dy=player.y-z.y; const len=Math.hypot(dx,dy); z.angle=Math.atan2(dy,dx); z.x+=dx/len*z.speed; z.y+=dy/len*z.speed; }
+    });
+    for(let i=0;i<zombies.length;i++){ for(let j=i+1;j<zombies.length;j++){
+        const a=zombies[i], b=zombies[j];
+        const dx=b.x-a.x, dy=b.y-a.y, dist=Math.hypot(dx,dy), minDist=(a.size+b.size)/2;
+        if(dist<minDist && dist>0){ const overlap=(minDist-dist)/2; const nx=dx/dist, ny=dy/dist; a.x-=nx*overlap*0.5; a.y-=ny*overlap*0.5; b.x+=nx*overlap*0.5; b.y+=ny*overlap*0.5; }
+    }}
+}
+
+function checkCollisions(){
+    for(let i=bullets.length-1;i>=0;i--){ const b=bullets[i];
+        for(let j=zombies.length-1;j>=0;j--){ const z=zombies[j];
+            const dx=b.x-z.x, dy=b.y-z.y;
+            if(Math.hypot(dx,dy)<z.size/2){ spawnParticles(z.x,z.y,6); zombies.splice(j,1); if(!b.special) bullets.splice(i,1); kills++; if(kills>=15) specialUnlocked=true; break; }
+        }
     }
-  </script>
+    if(damageCooldown>0) damageCooldown--;
+    for(let z of zombies){
+        const dx=z.x-player.x, dy=z.y-player.y;
+        const dist=Math.hypot(dx,dy); const minDist=(player.size+z.size)/2;
+        if(dist<minDist && damageCooldown<=0){
+            lives--; damageFlash=5; damageCooldown=60;
+            player.meleeing=true; player.meleeFrame=0; player.meleeTimer=0;
+            const pushDistance=20;
+            z.pushX=-dx/dist*pushDistance; z.pushY=-dy/dist*pushDistance; z.pushTimer=10;
+            if(lives<=0) endGame();
+        }
+    }
+}
 
+// === DESENHOS ===
+function draw(){
+    // Desenha o fundo primeiro
+    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+    
+    if(damageFlash>0){ ctx.fillStyle='rgba(255,0,0,0.3)'; ctx.fillRect(0,0,canvas.width,canvas.height); damageFlash--; }
+
+    bullets.forEach(b=>{ ctx.beginPath(); ctx.arc(b.x,b.y,b.size,0,Math.PI*2); ctx.fillStyle=b.special?'red':'#ffcc00'; ctx.fill(); });
+    zombies.forEach(z=>{
+        z.frameTimer++; if(z.frameTimer%8===0){ z.frame++; if(z.frame>=zombieFrames.length) z.frame=0; }
+        ctx.save(); ctx.translate(z.x,z.y); ctx.rotate(z.angle); const img=zombieFrames[z.frame];
+        ctx.drawImage(img,-img.width/2*scale,-img.height/2*scale,img.width*scale,img.height*scale); ctx.restore();
+    });
+    particles.forEach(p=>{ ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fillStyle=p.color||'orange'; ctx.fill(); });
+
+    let imgPlayer;
+    if(player.meleeing){ player.meleeTimer++; player.meleeFrame++; if(player.meleeFrame>=meleeFrames.length){ player.meleeing=false; player.meleeFrame=0; } imgPlayer=meleeFrames[player.meleeFrame]; }
+    else if(player.shooting){ player.shootTimer++; if(player.shootTimer%3===0){ player.shootFrame++; if(player.shootFrame>=shootFrames.length){ player.shooting=false; player.shootFrame=0; } } imgPlayer=shootFrames[player.shootFrame]; }
+    else{ player.frameTimer++; if(player.frameTimer%6===0){ player.frame++; if(player.frame>=playerFrames.length) player.frame=0; } imgPlayer=playerFrames[player.frame]; }
+
+    ctx.save(); ctx.translate(player.x,player.y); ctx.rotate(player.angle);
+    ctx.drawImage(imgPlayer,-imgPlayer.width/2*playerScale,-imgPlayer.height/2*playerScale,imgPlayer.width*playerScale,imgPlayer.height*playerScale);
+    ctx.restore();
+
+    // HUD
+    ctx.fillStyle='#fff'; ctx.font='20px "Press Start 2P"';
+    ctx.fillText(`❤️ Vidas: ${lives}`,20,40); ctx.fillText(`🔫 Balas: ${ammo}/${maxAmmo}`,20,70); ctx.fillText(`💀 Zumbis mortos: ${kills}`,20,100);
+    if(reloading){ ctx.fillStyle='orange'; ctx.fillText('Recarregando...',20,130); }
+    if(specialUnlocked){ ctx.fillStyle='red'; ctx.fillText(`Arma Especial: ${specialShotsLeft} tiros`,20,160); }
+
+    ctx.fillStyle='#fff'; ctx.textAlign='right'; ctx.font='20px "Press Start 2P"';
+    highScores.forEach((r,i)=>{ ctx.fillText(`${i+1}. ${r.name}: ${r.score}`, canvas.width-20, 70 + i*30); });
+    ctx.textAlign='left';
+
+    if(gameOver){ gameOverMsg.style.display='block'; loveText.style.display='block'; }
+    else{ gameOverMsg.style.display='none'; }
+
+    drawCrosshair();
+}
+
+// === MIRA ===
+function drawCrosshair(){
+    const size = 12; // raio do círculo
+    ctx.save();
+    ctx.translate(mouse.x, mouse.y);
+    ctx.beginPath();
+    ctx.arc(0,0,size,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fill();
+    ctx.lineWidth=2;
+    ctx.strokeStyle='gray';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-size/2, -size/2);
+    ctx.lineTo(size/2, size/2);
+    ctx.moveTo(-size/2, size/2);
+    ctx.lineTo(size/2, -size/2);
+    ctx.strokeStyle='white';
+    ctx.lineWidth=2;
+    ctx.stroke();
+    ctx.restore();
+}
+
+// === FIM DE JOGO / RECORDES ===
+function endGame(){
+    gameOver=true;
+    restartBtn.style.display='block';
+    checkHighScore();
+}
+
+function checkHighScore(){
+    const minScore = highScores[2].score;
+    if(kills > minScore){
+        awaitingName=true;
+        newRecordMsg.style.display='block';
+        recordInput.style.display='block';
+        recordInput.focus();
+    }
+}
+
+recordInput.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && awaitingName){
+        const name = recordInput.value || 'PLAYER';
+        highScores.push({name:name,score:kills});
+        highScores.sort((a,b)=>b.score-a.score);
+        highScores = highScores.slice(0,3);
+        localStorage.setItem('highScores',JSON.stringify(highScores));
+        recordInput.style.display='none'; newRecordMsg.style.display='none'; awaitingName=false;
+    }
+});
+
+// FOGOS
+function firework(){
+    if(!awaitingName) return;
+    const x=Math.random()*canvas.width, y=Math.random()*canvas.height/2;
+    const colors=['#ff0','#f0f','#0ff','#fff','#f00','#0f0'];
+    const particlesCount = 20;
+    for(let i=0;i<particlesCount;i++){
+        const angle=Math.random()*Math.PI*2, speed=Math.random()*5;
+        const color=colors[Math.floor(Math.random()*colors.length)];
+        particles.push({x,y,dx:Math.cos(angle)*speed,dy:Math.sin(angle)*speed,life:30,size:3,color:color});
+    }
+}
+
+// LOOP PRINCIPAL
+function gameLoop(){
+    if(!gameOver){ movePlayer(); spawnTimer++; if(spawnTimer%60===0) spawnZombie(); updateBullets(); updateZombies(); updateParticles(); checkCollisions(); }
+    draw(); if(awaitingName) firework();
+    requestAnimationFrame(gameLoop);
+}
+
+restartBtn.addEventListener('click',()=>{ resetGame(); });
+</script>
 </body>
 </html>
